@@ -9,6 +9,9 @@ import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.*;
+
+import slam.EKFSLAM;
+import utils.Pose;
 import lejos.nxt.Motor;
 import lejos.nxt.SensorPort;
 import lejos.nxt.remote.NXTCommand;
@@ -16,6 +19,7 @@ import lejos.pc.comm.NXTComm;
 import lejos.pc.comm.NXTCommLogListener;
 import lejos.pc.comm.NXTCommandConnector;
 import lejos.pc.comm.NXTConnector;
+import lejos.util.Matrix;
 import lejos.nxt.UltrasonicSensor;
 
 /**
@@ -59,7 +63,7 @@ public class RemoteRobot extends JFrame {
 
         @Override
         public void run() {
-            while (true) {
+            while (true) {            	
                 int dA = Motor.A.getTachoCount() - threadA;
                 int dB = Motor.B.getTachoCount() - threadB;
                 
@@ -225,7 +229,6 @@ public class RemoteRobot extends JFrame {
         NXTCommandConnector.setNXTCommand(new NXTCommand(conn.getNXTComm()));
 
         initialize();
-        //
     }
 
     public static void disconnect() {
@@ -249,7 +252,26 @@ public class RemoteRobot extends JFrame {
         Motor.C.smoothAcceleration(true);
         
         sonic = new UltrasonicSensor(SensorPort.S4);
-
+        
+        // Covariance of motion error
+    	double rt[][] = {
+    		{0.01209283, -0.01883810, -0.02272150},
+    		{-0.01883810, 0.03107288, 0.03688513},
+    		{-0.02272150, 0.03688513, 0.04397788}
+    	};
+    	
+    	// Covariance of sensor error
+    	double qt[][] = {
+    			{0.2, 0, 0},
+    			{0, 0.3, 0},
+    			{0, 0, 0},
+    	};
+        
+    	Matrix Rt = new Matrix(rt);
+    	Matrix Qt = new Matrix(qt);
+    	
+    	EKFSLAM ekf = new EKFSLAM(new Pose(0,0,0), Rt, Qt, 2);
+    	
         guiThread = new RemoteRobot.GUIThread(sonic);
         guiThread.start();
     }
