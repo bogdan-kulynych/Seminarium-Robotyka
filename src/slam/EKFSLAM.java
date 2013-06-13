@@ -45,7 +45,7 @@ public class EKFSLAM {
 		Fx = new Matrix(initial);
 	}
 	
-	public void inform(Point translationDelta, Angle rotationDelta) {
+	public void motionUpdate(Point translationDelta, Angle rotationDelta) {
 		mu.set(0, 0, mu.get(0, 0) + translationDelta.x);
 		mu.set(1, 0, mu.get(0, 0) + translationDelta.x);
 		mu.set(2, 0, mu.get(0, 0) + rotationDelta.deg());
@@ -57,7 +57,7 @@ public class EKFSLAM {
 				.plus(Fx.transpose().times(Rt.times(Fx)));
 	}
 	
-	public void inform(Pose observation, int observedSignature) {
+	public void measurementUpdate(Pose observation, int observedSignature) {
 		// Observation is expected to provide dx, dy of observation 
 		int j = observedSignature; 
 		
