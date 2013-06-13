@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferStrategy;
@@ -226,13 +227,16 @@ public class MapGUI extends JFrame {
     	g.setColor(Color.cyan);
     	double angle = Math.atan2(v1[1], v1[0]);
     	
-    	double length1 = Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1]),
-    			length2 = Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1]);
+    	double length1 = cast(Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])),
+    			length2 = cast(Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1]));
     	
-    	Ellipse2D ellipse = new Ellipse2D.Double(mu.getX(),mu.getY(),length1,length2);
+    	int[] coord = cast(mu.getX(),mu.getY());
+    	Ellipse2D ellipse = new Ellipse2D.Double(coord[0],coord[1],length1,length2);
     	
+    	AffineTransform at = new AffineTransform();
+    	at.rotate(angle);
     	
-    	g.draw(ellipse);
+    	g.draw(at.createTransformedShape(ellipse));
     	
     }
     
@@ -251,6 +255,7 @@ public class MapGUI extends JFrame {
         drawPath(g);
         drawStates(g);
         drawRobot(g);
+        drawEKF((Graphics2D)g);
         
     }
 }
