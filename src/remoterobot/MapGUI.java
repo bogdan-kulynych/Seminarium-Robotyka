@@ -122,7 +122,7 @@ public class MapGUI extends JFrame {
         draw();
     }
     
-    public void addState(LinkedList<Point2D> z) {
+    public void addState(LinkedList<Point2D> z, LinkedList<Integer> signatures) {
         states.add(new Point3D(robot.pos.getX(), robot.pos.getY(), robot.rot));
         measurements.add(z);
         draw();
@@ -197,7 +197,7 @@ public class MapGUI extends JFrame {
             }
             g.setColor(Color.cyan);
             LinkedList<Point2D> z = measurements.get(i);
-            System.out.println("z " + i+ " size "+z.size());
+//            System.out.println("z " + i+ " size "+z.size());
             for(Point2D zi : z) {
                 g.drawLine(pos2[0], pos2[1], (int)(cast(zi.getX()) * Math.cos(zi.getY()+p2.Z) + pos2[0]), 
                         (int)(cast(zi.getX()) * Math.sin(zi.getY()+p2.Z) + pos2[1]));

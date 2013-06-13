@@ -29,7 +29,7 @@ class AugmentedState extends Matrix {
 		this.set(base + 1, 0, this.get(base + 1, 0) + y);
 	}
 	
-	public void setPose(float x, float y) {
+	public void setRobotPose(float x, float y) {
 		this.set(0, 0, x);
 		this.set(1, 0, y);
 	}

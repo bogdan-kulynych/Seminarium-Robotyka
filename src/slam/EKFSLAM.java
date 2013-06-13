@@ -14,8 +14,8 @@ public class EKFSLAM {
 	
 	Matrix Rt, Qt;
 	
-	private int N;
-	private Set<Integer> seenLandmarks;
+	public int N;
+	Set<Integer> seenLandmarks;
 	
 	private Matrix I;
 	private Matrix Fx;
@@ -24,6 +24,7 @@ public class EKFSLAM {
 		// Initializing main matrices
 		N = signaturesCount;
 		mu = new AugmentedState(N);
+		sigma = new Matrix(3*N + 3, 3*N + 3);
 		
 		mu.set(0, 0, start.position.x);
 		mu.set(1, 0, start.position.y);
@@ -35,7 +36,7 @@ public class EKFSLAM {
 		seenLandmarks = new HashSet<Integer>();
 		
 		// Initializing helpers
-		I = Matrix.identity(3, 3);
+		I = Matrix.identity(3*N + 3, 3*N + 3);
 		
 		double initial[][] = new double[3][3 + 3*N];
 		initial[0][0] = 1;
@@ -47,8 +48,8 @@ public class EKFSLAM {
 	
 	public void motionUpdate(Point translationDelta, Angle rotationDelta) {
 		mu.set(0, 0, mu.get(0, 0) + translationDelta.x);
-		mu.set(1, 0, mu.get(0, 0) + translationDelta.x);
-		mu.set(2, 0, mu.get(0, 0) + rotationDelta.deg());
+		mu.set(1, 0, mu.get(1, 0) + translationDelta.x);
+		mu.set(2, 0, mu.get(2, 0) + rotationDelta.deg());
 		Matrix d = new Matrix(3, 3);
 		d.set(0, 2, -translationDelta.y);
 		d.set(1, 2, translationDelta.x);
@@ -119,5 +120,16 @@ public class EKFSLAM {
 	
 	public Matrix getSigma() {
 		return sigma;
+	}
+	
+	public static String showMatrix(Matrix m) {
+		String result = "";
+		for (int i = 0; i < m.getRowDimension(); ++i) {
+			for (int j = 0; j < m.getColumnDimension(); ++j) {
+				result += m.get(i, j) + " ";
+			}
+			result += "\n";
+		}
+		return result;
 	}
 }

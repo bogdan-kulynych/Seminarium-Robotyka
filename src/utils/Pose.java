@@ -17,4 +17,8 @@ public class Pose {
 		this.position.set(pose.position);
 		this.direction.set(pose.direction);
 	}
+	
+	public String toString() {
+		return position.x + ", " + position.y + ", " + direction.deg();
+	}
 }
