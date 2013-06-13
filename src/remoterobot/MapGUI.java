@@ -3,6 +3,8 @@ package remoterobot;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferStrategy;
 import java.util.LinkedList;
@@ -10,6 +12,7 @@ import java.util.LinkedList;
 import javax.swing.JFrame;
 
 import lejos.util.Matrix;
+import utils.Eigen;
 
 public class MapGUI extends JFrame {
 
@@ -23,12 +26,20 @@ public class MapGUI extends JFrame {
         Point2D pos = new Point2D.Double(0.0f, 0.0f);
         double rot = 0; 
     } 
-    public Matrix sigma;
-    public Point2D mu;
+    double[] v1 = new double[2];
+    double[] v2 = new double[2];
+    double eigVal1, eigVal2;
+    Point2D mu;
     
     public void setEKF(Point2D mu, Matrix sigma){
 		this.mu = mu;
-		this.sigma = sigma;
+		Eigen e = new Eigen(sigma);
+		e.calculate();
+		v1 = e.getEigenVector(0);
+		eigVal1 = e.getEigenValue(0);
+		
+		v2 = e.getEigenVector(1);
+		eigVal1 = e.getEigenValue(1);		
 	}
     
     public Robot robot = new Robot();
@@ -211,8 +222,18 @@ public class MapGUI extends JFrame {
         g.drawLine(pos[0], pos[1], x3[0], x3[1]);
     }
     
-    private void drawEKF(Graphics g){
+    private void drawEKF(Graphics2D g){
     	g.setColor(Color.cyan);
+    	double angle = Math.atan2(v1[1], v1[0]);
+    	
+    	double length1 = Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1]),
+    			length2 = Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1]);
+    	
+    	Ellipse2D ellipse = new Ellipse2D.Double(mu.getX(),mu.getY(),length1,length2);
+    	
+    	
+    	g.draw(ellipse);
+    	
     }
     
     public void draw() {
@@ -230,6 +251,7 @@ public class MapGUI extends JFrame {
         drawPath(g);
         drawStates(g);
         drawRobot(g);
+        
     }
 }
 

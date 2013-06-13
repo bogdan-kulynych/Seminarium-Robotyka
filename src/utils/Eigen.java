@@ -11,16 +11,16 @@ public class Eigen {
 	/**
 	 * Assumes matrix is 2x2
 	 */
-	Eigen(Matrix matrix) {
+	public Eigen(Matrix matrix) {
 		this.matrix = matrix;
 	}
 	
-	static double det(Matrix a) {
+	public static double det(Matrix a) {
 		return a.get(0, 0) * a.get(1, 1)
 			 - a.get(0, 1) * a.get(1, 0);
 	}
 	
-	void calculate() {
+	public void calculate() {
 		eigenvalues = new double[2];
 		double a = matrix.get(0, 0);
 		double b = matrix.get(0, 1);
@@ -39,19 +39,19 @@ public class Eigen {
 		eigenvectors[1][1] =  1;
 	}
 	
-	double[][] getEigenVectors() {
+	public double[][] getEigenVectors() {
 		return eigenvectors;
 	}
 	
-	double[] getEigenVector(int i) {
+	public double[] getEigenVector(int i) {
 		return eigenvectors[i];
 	}
 	
-	double[] getEigenValues() {
+	public double[] getEigenValues() {
 		return eigenvalues;
 	}
 	
-	double getEigenValue(int i) {
+	public double getEigenValue(int i) {
 		return eigenvalues[i];
 	}
 }
