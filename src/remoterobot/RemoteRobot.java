@@ -82,24 +82,28 @@ public class RemoteRobot extends JFrame {
                         FORWARD = false;	
     				ekf.motionUpdate(new Point((float) dx, (float) dy), new Angle(0));
                     mapTest.moveRobot(dr);
+                    mapTest.setEKF(ekf.getPose().position, ekf.getRobotSigma());
                 } 
                 if(BACKWARD) {
                     if(STOP)
                         BACKWARD = false;
                     ekf.motionUpdate(new Point((float) dx, (float) dy), new Angle(0));
                     mapTest.moveRobot(dr);
+                    mapTest.setEKF(ekf.getPose().position, ekf.getRobotSigma());
                 } 
                 if(LEFT) {
                     if(STOP)
                         LEFT = false;
                     ekf.motionUpdate(new Point(0, 0), new Angle((float) dt));
                     mapTest.rotateRobot(dt);
+                    mapTest.setEKF(ekf.getPose().position, ekf.getRobotSigma());
                 } 
                 if(RIGHT){
                     if(STOP)
                         RIGHT = false;
                     ekf.motionUpdate(new Point(0, 0), new Angle((float) dt));
                     mapTest.rotateRobot(dt);
+                    mapTest.setEKF(ekf.getPose().position, ekf.getRobotSigma());
                 }
                 if(STOP){
                     STOP = false;
@@ -324,6 +328,7 @@ public class RemoteRobot extends JFrame {
             		);
             		ekf.measurementUpdate(landmark, Integer.parseInt("" + ke.getKeyChar()));
             		mapTest.addState(z, s);
+            		mapTest.setEKF(ekf.getPose().position, ekf.getRobotSigma());
             		listeningForSignature = false;
             	}
             }

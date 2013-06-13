@@ -6,8 +6,11 @@ import lejos.util.Matrix;
 class AugmentedState extends Matrix {
 	private static final long serialVersionUID = 1L;
 
+	public AugmentedState(Matrix m) {
+		super(m.getArray());
+	}
 	public AugmentedState(int N) throws IllegalArgumentException {
-		super(3*N, 1);
+		super(3*N + 3, 1);
 	}
 	
 	public Pose getRobotPose() {

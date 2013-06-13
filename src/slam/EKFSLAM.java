@@ -107,10 +107,13 @@ public class EKFSLAM {
 			{0, 0, 0, 0, 0, q}
 		};
 		Matrix Ht = new Matrix(ht).times(Fxj).times(1/q);
-		Matrix Kt = sigma.times(Ht.transpose().times(
-			Ht.times(sigma.times(Ht.transpose()).plus(Qt)).inverse())
+		System.out.println("Qt: " + Qt.getRowDimension() + "x" + Qt.getColumnDimension());
+		System.out.println("Ht: " + Ht.getRowDimension() + "x" + Ht.getColumnDimension());
+		System.out.println("sigma: " + sigma.getRowDimension() + "x" + sigma.getColumnDimension());
+		Matrix Kt = sigma.times(Ht.transpose()).times(
+			Ht.times(sigma.times(Ht.transpose())).plus(Qt).inverse()
 		);
-		mu = (AugmentedState)mu.plus(Kt.times(dz));
+		mu = new AugmentedState(mu.plus(Kt.times(dz)));
 		sigma = (I.minus(Kt.times(Ht))).times(sigma);
 	}
 	
@@ -120,6 +123,12 @@ public class EKFSLAM {
 	
 	public Matrix getSigma() {
 		return sigma;
+	}
+	
+	public Matrix getRobotSigma(){
+		Matrix robotSigma = new Matrix(2,2);
+		robotSigma.setMatrix(new int[]{0,1}, new int[]{0,1}, sigma);
+		return robotSigma;
 	}
 	
 	public static String showMatrix(Matrix m) {

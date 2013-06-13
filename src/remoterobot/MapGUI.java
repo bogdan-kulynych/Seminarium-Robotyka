@@ -14,6 +14,7 @@ import javax.swing.JFrame;
 
 import lejos.util.Matrix;
 import utils.Eigen;
+import utils.Point;
 
 public class MapGUI extends JFrame {
 
@@ -30,9 +31,9 @@ public class MapGUI extends JFrame {
     double[] v1 = new double[2];
     double[] v2 = new double[2];
     double eigVal1, eigVal2;
-    Point2D mu;
+    Point mu;
     
-    public void setEKF(Point2D mu, Matrix sigma){
+    public void setEKF(Point mu, Matrix sigma){
 		this.mu = mu;
 		Eigen e = new Eigen(sigma);
 		e.calculate();
@@ -230,8 +231,9 @@ public class MapGUI extends JFrame {
     	double length1 = cast(Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])),
     			length2 = cast(Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1]));
     	
-    	int[] coord = cast(mu.getX(),mu.getY());
+    	int[] coord = cast(mu.x,mu.y);
     	Ellipse2D ellipse = new Ellipse2D.Double(coord[0],coord[1],length1,length2);
+
     	
     	AffineTransform at = new AffineTransform();
     	at.rotate(angle);
