@@ -1,9 +1,15 @@
 package remoterobot;
-import java.awt.*;
+
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferStrategy;
-import java.util.*;
+import java.util.LinkedList;
+
 import javax.swing.JFrame;
+
+import lejos.util.Matrix;
 
 public class MapGUI extends JFrame {
 
@@ -17,6 +23,13 @@ public class MapGUI extends JFrame {
         Point2D pos = new Point2D.Double(0.0f, 0.0f);
         double rot = 0; 
     } 
+    public Matrix sigma;
+    public Point2D mu;
+    
+    public void setEKF(Point2D mu, Matrix sigma){
+		this.mu = mu;
+		this.sigma = sigma;
+	}
     
     public Robot robot = new Robot();
     
@@ -196,6 +209,10 @@ public class MapGUI extends JFrame {
         g.drawLine(x1[0], x1[1], x3[0], x3[1]);
         g.drawLine(pos[0], pos[1], x2[0], x2[1]);
         g.drawLine(pos[0], pos[1], x3[0], x3[1]);
+    }
+    
+    private void drawEKF(Graphics g){
+    	g.setColor(Color.cyan);
     }
     
     public void draw() {

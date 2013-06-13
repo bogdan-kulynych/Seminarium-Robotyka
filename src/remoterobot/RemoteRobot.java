@@ -307,26 +307,28 @@ public class RemoteRobot extends JFrame {
             }
             if (ke.getKeyChar() == 'f') {
                 LinkedList<Point2D> z = new LinkedList<Point2D>();
-                int right_angle_half = 20;
+//                int right_angle_half = 20;
                 int angle = 0;
-                int steps = 10;
-                for(int i = 0; i < steps; i++) {
-                    int dist = sonic.getDistance();
-                    if(dist < CLOSURE) {
-                        z.add(new Point2D.Double((double)dist/100, Math.toRadians(angle-90)));
-                    }
-                    int old_angle = angle;
-                    angle += right_angle_half;
-                    angle %= steps * right_angle_half;
-                    
-                    Motor.C.rotate(angle - old_angle);
-                    
-                    try {
-                        sleep(150);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(RemoteRobot.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
+                int steps = 1;
+                int dist = sonic.getDistance();
+                z.add(new Point2D.Double((double)dist/100.0,Math.toRadians(angle)));
+//                for(int i = 0; i < steps; i++) {
+//                    int dist = sonic.getDistance();
+//                    if(dist < CLOSURE) {
+//                        z.add(new Point2D.Double((double)dist/100, Math.toRadians(angle-90)));
+//                    }
+//                    int old_angle = angle;
+//                    angle += right_angle_half;
+//                    angle %= steps * right_angle_half;
+//                    
+//                    Motor.C.rotate(angle - old_angle);
+//                    
+//                    try {
+//                        sleep(150);
+//                    } catch (InterruptedException ex) {
+//                        Logger.getLogger(RemoteRobot.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//                }
 
                 mapTest.addState(z);
             }
