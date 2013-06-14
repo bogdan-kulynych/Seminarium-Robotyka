@@ -14,6 +14,7 @@ import javax.swing.JFrame;
 
 import lejos.util.Matrix;
 import utils.Eigen;
+import utils.Point;
 
 public class MapGUI extends JFrame {
 
@@ -30,17 +31,21 @@ public class MapGUI extends JFrame {
     double[] v1 = new double[2];
     double[] v2 = new double[2];
     double eigVal1, eigVal2;
-    Point2D mu;
+    Point mu = new Point(0,0);
     
-    public void setEKF(Point2D mu, Matrix sigma){
+    public void setEKF(Point mu, Matrix sigma){
 		this.mu = mu;
 		Eigen e = new Eigen(sigma);
 		e.calculate();
 		v1 = e.getEigenVector(0);
-		eigVal1 = e.getEigenValue(0);
+		double f1 = Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])*e.getEigenValue(0);
+		v1[0]*=f1;
+		v1[1]*=f1;
 		
 		v2 = e.getEigenVector(1);
-		eigVal1 = e.getEigenValue(1);		
+		double f2 = Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1])*e.getEigenValue(1);
+		v2[0]*=f2;
+		v2[1]*=f2;		
 	}
     
     public Robot robot = new Robot();
@@ -225,13 +230,19 @@ public class MapGUI extends JFrame {
     
     private void drawEKF(Graphics2D g){
     	g.setColor(Color.cyan);
+    	System.out.println("pos: "+mu.x+" "+mu.y);
+    	System.out.println("v1: "+v1[0]+" "+v1[1]);
+    	System.out.println("v2: "+v2[0]+" "+v2[1]);
+    	System.out.println();
     	double angle = Math.atan2(v1[1], v1[0]);
+    	
     	
     	double length1 = cast(Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])),
     			length2 = cast(Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1]));
     	
-    	int[] coord = cast(mu.getX(),mu.getY());
+    	int[] coord = cast(mu.x,mu.y);
     	Ellipse2D ellipse = new Ellipse2D.Double(coord[0],coord[1],length1,length2);
+
     	
     	AffineTransform at = new AffineTransform();
     	at.rotate(angle);
