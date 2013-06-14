@@ -28,7 +28,7 @@ public class EKFSLAM {
 		
 		mu.set(0, 0, start.position.x);
 		mu.set(1, 0, start.position.y);
-		mu.set(2, 0, start.direction.deg());
+		mu.set(2, 0, start.direction.rad());
 		
 		this.Rt = Rt;
 		this.Qt = Qt;
@@ -49,7 +49,7 @@ public class EKFSLAM {
 	public void motionUpdate(Point translationDelta, Angle rotationDelta) {
 		mu.set(0, 0, mu.get(0, 0) + translationDelta.x);
 		mu.set(1, 0, mu.get(1, 0) + translationDelta.x);
-		mu.set(2, 0, mu.get(2, 0) + rotationDelta.deg());
+		mu.set(2, 0, mu.get(2, 0) + rotationDelta.rad());
 		Matrix d = new Matrix(3, 3);
 		d.set(0, 2, -translationDelta.y);
 		d.set(1, 2, translationDelta.x);
@@ -78,7 +78,7 @@ public class EKFSLAM {
 		float dy = landmark.position.y - robot.position.y;
 		float q = dx*dx + dy*dy;
 		double dr = Math.sqrt(q);
-		double da = Math.atan2(dy, dx) - robot.direction.deg();
+		double da = Math.atan2(dy, dx) - robot.direction.rad();
 		
 		double za[][] = {{dr}, {da}, {j}};
 		Matrix z = new Matrix(za);
@@ -88,7 +88,7 @@ public class EKFSLAM {
 		float _dy = observation.position.y;
 		float _q = _dx*_dx + _dy*_dy;
 		double _dr = Math.sqrt(_q);
-		double _da = Math.atan2(_dy, _dx) - robot.direction.deg();
+		double _da = Math.atan2(_dy, _dx) - robot.direction.rad();
 		double _za[][] = {{_dr}, {_da}, {j}};
 		Matrix _z = new Matrix(_za);
 		dz = _z.minus(z);

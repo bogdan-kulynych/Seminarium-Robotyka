@@ -73,7 +73,7 @@ public class RemoteRobot extends JFrame {
                 double dt = Math.toRadians((dB-dA)/2)*0.036 / 0.08;
                 double x = ekf.getPose().position.x;
 				double y = ekf.getPose().position.y;
-				double t = ekf.getPose().direction.deg();
+				double t = ekf.getPose().direction.rad();
 				double dx = x + Math.cos(t);
 				double dy = y + Math.sin(t);
 				
@@ -318,8 +318,8 @@ public class RemoteRobot extends JFrame {
             		z.add(new Point2D.Double((double) lastDistance/100.0, 0));
             		s.add(Integer.parseInt("" + ke.getKeyChar()));
             		Pose landmark = new Pose(
-            			(float)(ekf.getPose().position.x - lastDistance * Math.cos((double)ekf.getPose().direction.deg())),
-            			(float)(ekf.getPose().position.y - lastDistance * Math.sin((double)ekf.getPose().direction.deg())),
+            			(float)(ekf.getPose().position.x - lastDistance * Math.cos((double)ekf.getPose().direction.rad())),
+            			(float)(ekf.getPose().position.y - lastDistance * Math.sin((double)ekf.getPose().direction.rad())),
             			0
             		);
             		ekf.measurementUpdate(landmark, Integer.parseInt("" + ke.getKeyChar()));
