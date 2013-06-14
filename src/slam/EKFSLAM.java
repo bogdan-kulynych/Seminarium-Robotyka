@@ -48,7 +48,7 @@ public class EKFSLAM {
 	
 	public void motionUpdate(Point translationDelta, Angle rotationDelta) {
 		mu.set(0, 0, mu.get(0, 0) + translationDelta.x);
-		mu.set(1, 0, mu.get(1, 0) + translationDelta.x);
+		mu.set(1, 0, mu.get(1, 0) + translationDelta.y);
 		mu.set(2, 0, mu.get(2, 0) + rotationDelta.rad());
 		Matrix d = new Matrix(3, 3);
 		d.set(0, 2, -translationDelta.y);
