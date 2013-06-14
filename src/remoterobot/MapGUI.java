@@ -24,6 +24,10 @@ public class MapGUI extends JFrame {
     public java.util.List<Point2D> path = new LinkedList<Point2D>();
     public LinkedList<LinkedList<Point2D>> measurements = new LinkedList<LinkedList<Point2D>>();
     
+    class EKFPos {
+    	public Point mu;
+    	public Matrix sigma;
+    }
     class Robot {
         Point2D pos = new Point2D.Double(0.0f, 0.0f);
         double rot = 0; 
@@ -38,14 +42,12 @@ public class MapGUI extends JFrame {
 		Eigen e = new Eigen(sigma);
 		e.calculate();
 		v1 = e.getEigenVector(0);
-		double f1 = Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])*e.getEigenValue(0);
-		v1[0]*=f1;
-		v1[1]*=f1;
+		v1[0]=v1[0]/Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])*Math.sqrt(e.getEigenValue(0));
+		v1[1]=v1[1]/Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])*Math.sqrt(e.getEigenValue(0));
 		
 		v2 = e.getEigenVector(1);
-		double f2 = Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1])*e.getEigenValue(1);
-		v2[0]*=f2;
-		v2[1]*=f2;		
+		v2[0]=v2[0]/Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1])*Math.sqrt(e.getEigenValue(1));
+		v2[1]=v2[1]/Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1])*Math.sqrt(e.getEigenValue(1));
 	}
     
     public Robot robot = new Robot();
@@ -242,10 +244,10 @@ public class MapGUI extends JFrame {
     	
     	int[] coord = cast(mu.x,mu.y);
     	System.out.println("coord: "+coord[0]+" "+coord[1]);
-    	Ellipse2D ellipse = new Ellipse2D.Double(coord[0],coord[1],length1,length2);
+    	Ellipse2D ellipse = new Ellipse2D.Double(coord[0]-length1/2.0,coord[1]-length2/2.0,length1,length2);
     	
     	AffineTransform at = new AffineTransform();
-    	at.rotate(angle);
+    	at.rotate(angle,coord[0],coord[1]);
     	
     	g.draw(at.createTransformedShape(ellipse));
     	
