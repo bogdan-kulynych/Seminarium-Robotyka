@@ -10,7 +10,7 @@ import utils.Pose;
 
 public class EKFSLAM {	
 	Matrix sigma;
-	AugmentedState mu;
+	public AugmentedState mu;
 	
 	Matrix Rt, Qt;
 	
@@ -25,6 +25,9 @@ public class EKFSLAM {
 		N = signaturesCount;
 		mu = new AugmentedState(N);
 		sigma = new Matrix(3*N + 3, 3*N + 3);
+		for(int i=3;i<3*N+3;i++){
+			sigma.set(i,i,1000000);
+		}
 		
 		mu.set(0, 0, start.position.x);
 		mu.set(1, 0, start.position.y);
@@ -63,15 +66,17 @@ public class EKFSLAM {
 		int j = observedSignature; 
 		
 		// If landmark never seen before 
-		if (!seenLandmarks.add(observedSignature)) {	
+		if (!seenLandmarks.contains(observedSignature)) {	
 			mu.setLandmarkPose(j, 
 				(float)(mu.get(0, 0) + observation.position.x),
 				(float)(mu.get(1, 0) + observation.position.y)
 			);
 			seenLandmarks.add(observedSignature);
+			System.out.println("Mu: " + mu.get(0, 0) + " " + mu.get(1, 0));
 		}
 
 		Pose landmark = mu.getLandmark(j);
+		System.out.println(j + " Landmark pose: " + landmark.position);
 		Pose robot = mu.getRobotPose();
 		
 		float dx = landmark.position.x - robot.position.x;
@@ -107,9 +112,6 @@ public class EKFSLAM {
 			{0, 0, 0, 0, 0, q}
 		};
 		Matrix Ht = new Matrix(ht).times(Fxj).times(1/q);
-		System.out.println("Qt: " + Qt.getRowDimension() + "x" + Qt.getColumnDimension());
-		System.out.println("Ht: " + Ht.getRowDimension() + "x" + Ht.getColumnDimension());
-		System.out.println("sigma: " + sigma.getRowDimension() + "x" + sigma.getColumnDimension());
 		Matrix Kt = sigma.times(Ht.transpose()).times(
 			Ht.times(sigma.times(Ht.transpose())).plus(Qt).inverse()
 		);
@@ -125,10 +127,18 @@ public class EKFSLAM {
 		return sigma;
 	}
 	
-	public Matrix getRobotSigma(){
+	public Matrix getRobotSigma() {
 		Matrix robotSigma = new Matrix(2,2);
 		robotSigma.setMatrix(new int[]{0,1}, new int[]{0,1}, sigma);
 		return robotSigma;
+	}
+	
+	public Matrix getLandmarkSigma(int j) {
+		int base = 3 + 3*j;
+		Matrix landmarkSigma = new Matrix(2,2);
+		landmarkSigma.set(0, 0, sigma.get(base, base));
+		landmarkSigma.set(0, 0, sigma.get(base + 1, base + 1));
+		return landmarkSigma;
 	}
 	
 	public static String showMatrix(Matrix m) {

@@ -6,10 +6,12 @@ import java.awt.geom.Point2D;
 import java.io.IOException;
 import static java.lang.Thread.sleep;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.*;
 
+import remoterobot.MapGUI.EKFPos;
 import slam.EKFSLAM;
 import utils.Point;
 import utils.Angle;
@@ -81,28 +83,28 @@ public class RemoteRobot extends JFrame {
     				ekf.motionUpdate(new Point((float) dx, (float) dy), new Angle(0));
                     mapTest.moveRobot(dr);
                     System.out.println("pose:" + ekf.getPose().toString());
-                    mapTest.setEKF(ekf.getPose().position, ekf.getRobotSigma());
+                    mapTest.robotEKF.update(ekf.getPose().position, ekf.getRobotSigma());
                 } 
                 if(BACKWARD) {
                     if(STOP)
                         BACKWARD = false;
                     ekf.motionUpdate(new Point((float) dx, (float) dy), new Angle(0));
                     mapTest.moveRobot(dr);
-                    mapTest.setEKF(ekf.getPose().position, ekf.getRobotSigma());
+                    mapTest.robotEKF.update(ekf.getPose().position, ekf.getRobotSigma());
                 } 
                 if(LEFT) {
                     if(STOP)
                         LEFT = false;
                     ekf.motionUpdate(new Point(0, 0), new Angle((float) dt));
                     mapTest.rotateRobot(dt);
-                    mapTest.setEKF(ekf.getPose().position, ekf.getRobotSigma());
+                    mapTest.robotEKF.update(ekf.getPose().position, ekf.getRobotSigma());
                 } 
                 if(RIGHT){
                     if(STOP)
                         RIGHT = false;
                     ekf.motionUpdate(new Point(0, 0), new Angle((float) dt));
                     mapTest.rotateRobot(dt);
-                    mapTest.setEKF(ekf.getPose().position, ekf.getRobotSigma());
+                    mapTest.robotEKF.update(ekf.getPose().position, ekf.getRobotSigma());
                 }
                 if(STOP){
                     STOP = false;
@@ -265,7 +267,7 @@ public class RemoteRobot extends JFrame {
 				{ -0.01883810, 0.03107288, 0.03688513 },
 				{ -0.02272150, 0.03688513, 0.04397788 } };
 		// Covariance of sensor error
-		double qt[][] = { { 0.2, 0, 0 }, { 0, 0.3, 0 }, { 0, 0, 0 }, };
+		double qt[][] = { { 0.2, 0, 0 }, { 0, 0.03, 0 }, { 0, 0, 0 }, };
 		Matrix Rt = new Matrix(rt);
 		Matrix Qt = new Matrix(qt);
 		ekf = new EKFSLAM(new Pose(0, 0, 0), Rt, Qt, 2);
@@ -279,7 +281,7 @@ public class RemoteRobot extends JFrame {
         //Buttons action
     	
     	boolean listeningForSignature = false;
-    	int lastDistance = 0;
+    	double lastDistance = 0;
     	
         public void actionPerformed(ActionEvent ae) {
             if (ae.getSource() == quit) {
@@ -296,38 +298,56 @@ public class RemoteRobot extends JFrame {
         public void keyPressed(KeyEvent ke) {
             if (ke.getKeyChar() == 'w') {
                 FORWARD = true;
+                listeningForSignature = false;
             }
             if (ke.getKeyChar() == 's') {
                 BACKWARD = true;
+                listeningForSignature = false;
             }
             if (ke.getKeyChar() == 'a') {
                 LEFT = true;
+                listeningForSignature = false;
             }
             if (ke.getKeyChar() == 'd') {
                 RIGHT = true;
+                listeningForSignature = false;
             }
             if (ke.getKeyChar() == 'f') {
             	System.out.println("Sensing landmark");
-            	System.out.println(ekf.N);
             	listeningForSignature = true;
-                lastDistance = sonic.getDistance();
+                lastDistance = sonic.getDistance() / 100.0;
             }
-            if (ke.getKeyChar() >= '0' && ke.getKeyChar() < '9') {
-            	int signature = Integer.parseInt(String.valueOf(ke.getKeyChar())); 
-            	if (listeningForSignature && signature < ekf.N) {
+            if (listeningForSignature && ke.getKeyChar() >= '0' && ke.getKeyChar() < '9') {
+            	int signature = Integer.parseInt(String.valueOf(ke.getKeyChar()));
+            	if (lastDistance >= CLOSURE) {
+            		System.out.println("Nothing found");
+            	} else if (listeningForSignature && signature < ekf.N) {
             		System.out.println("Landmark spotted");
             		LinkedList<Point2D> z = new LinkedList<Point2D>();
             		LinkedList<Integer> s = new LinkedList<Integer>();
             		z.add(new Point2D.Double((double) lastDistance/100.0, 0));
-            		s.add(Integer.parseInt("" + ke.getKeyChar()));
+            		s.add(signature);
             		Pose landmark = new Pose(
-            			(float)(ekf.getPose().position.x - lastDistance * Math.cos((double)ekf.getPose().direction.rad())),
-            			(float)(ekf.getPose().position.y - lastDistance * Math.sin((double)ekf.getPose().direction.rad())),
+            			(float)(lastDistance * Math.cos((double)ekf.getPose().direction.rad())),
+            			(float)(lastDistance * Math.sin((double)ekf.getPose().direction.rad())),
             			0
             		);
+            		System.out.println("Before sensors: " + ekf.getPose().position.x + ", " + ekf.getPose().position.y);
+            		System.out.println("Distance: "+lastDistance);
             		ekf.measurementUpdate(landmark, Integer.parseInt("" + ke.getKeyChar()));
+            		
+            		for (Entry<Integer, EKFPos> e : mapTest.landmarks.entrySet()) {
+            			int j = e.getKey();
+            			e.getValue().update(ekf.mu.getLandmark(j).position, ekf.getLandmarkSigma(j));
+            		}
+            		
             		mapTest.addState(z, s);
-            		mapTest.setEKF(ekf.getPose().position, ekf.getRobotSigma());
+            		mapTest.landmarks.put(signature, new MapGUI.EKFPos(
+            				ekf.mu.getLandmark(signature).position, ekf.getLandmarkSigma(signature))
+            		);
+            		System.out.println("After sensors: " + ekf.getPose().position.x + ", " + ekf.getPose().position.y);
+            		mapTest.warpRobot(ekf.getPose());
+            		mapTest.robotEKF.update(ekf.getPose().position, ekf.getRobotSigma());
             		listeningForSignature = false;
             	}
             }
@@ -346,7 +366,6 @@ public class RemoteRobot extends JFrame {
         RemoteRobot NXTrc = new RemoteRobot();
         NXTrc.setVisible(true);
         NXTrc.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
         
         mapTest = new MapGUI();
         mapTest.run();

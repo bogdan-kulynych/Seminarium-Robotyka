@@ -16,4 +16,8 @@ public class Point {
 		this.x = point.x;
 		this.y = point.y;
 	}
+	
+	public String toString(){
+		return x+" "+y;
+	}
 }

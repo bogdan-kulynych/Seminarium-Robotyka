@@ -8,13 +8,17 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferStrategy;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 import javax.swing.JFrame;
 
 import lejos.util.Matrix;
+import slam.EKFSLAM;
 import utils.Eigen;
 import utils.Point;
+import utils.Pose;
 
 public class MapGUI extends JFrame {
 
@@ -23,32 +27,46 @@ public class MapGUI extends JFrame {
     public java.util.List<Point3D> states = new LinkedList<Point3D>();
     public java.util.List<Point2D> path = new LinkedList<Point2D>();
     public LinkedList<LinkedList<Point2D>> measurements = new LinkedList<LinkedList<Point2D>>();
+    public Map<Integer,EKFPos> landmarks = new HashMap<Integer,EKFPos>();
     
-    class EKFPos {
+    public static class EKFPos {
+    	public double[] v1;
+    	public double[] v2;
     	public Point mu;
-    	public Matrix sigma;
+    	
+    	public EKFPos(){
+    		v1 = new double[2];
+    		v2 = new double[2];
+    		mu = new Point(0,0);
+    	}
+    	
+    	public EKFPos(Point mu, Matrix sigma){
+    		this();
+    		update(mu,sigma);
+    	}
+    	
+    	public void update(Point mu, Matrix sigma){
+    		this.mu = mu;
+    		System.out.println("Sigma for landmark:");
+    		System.out.println(EKFSLAM.showMatrix(sigma));
+    		Eigen e = new Eigen(sigma);
+    		e.calculate();
+    		v1 = e.getEigenVector(0);
+    		v1[0]=v1[0]/Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])*Math.sqrt(e.getEigenValue(0));
+    		v1[1]=v1[1]/Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])*Math.sqrt(e.getEigenValue(0));
+    		
+    		v2 = e.getEigenVector(1);
+    		v2[0]=v2[0]/Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1])*Math.sqrt(e.getEigenValue(1));
+    		v2[1]=v2[1]/Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1])*Math.sqrt(e.getEigenValue(1));
+    	}
     }
+    
     class Robot {
         Point2D pos = new Point2D.Double(0.0f, 0.0f);
         double rot = 0; 
     } 
-    double[] v1 = new double[2];
-    double[] v2 = new double[2];
-    double eigVal1, eigVal2;
-    Point mu = new Point(0,0);
     
-    public void setEKF(Point mu, Matrix sigma){
-		this.mu = mu;
-		Eigen e = new Eigen(sigma);
-		e.calculate();
-		v1 = e.getEigenVector(0);
-		v1[0]=v1[0]/Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])*Math.sqrt(e.getEigenValue(0));
-		v1[1]=v1[1]/Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])*Math.sqrt(e.getEigenValue(0));
-		
-		v2 = e.getEigenVector(1);
-		v2[0]=v2[0]/Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1])*Math.sqrt(e.getEigenValue(1));
-		v2[1]=v2[1]/Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1])*Math.sqrt(e.getEigenValue(1));
-	}
+    public EKFPos robotEKF = new EKFPos();
     
     public Robot robot = new Robot();
     
@@ -56,6 +74,7 @@ public class MapGUI extends JFrame {
         path.add(new Point2D.Double(robot.pos.getX(), robot.pos.getY()));
         states.add(new Point3D(robot.pos.getX(), robot.pos.getY(), robot.rot));
         measurements.add(new LinkedList<Point2D>());
+        
     }
 
     private static final long DEMO_TIME = 5000;
@@ -125,6 +144,12 @@ public class MapGUI extends JFrame {
         draw();
     }
     
+    public void warpRobot(Pose pose){
+    	robot.pos.setLocation(pose.position.x, pose.position.y);
+    	robot.rot = pose.direction.rad();
+    	draw();    	
+    }
+    
     public void rotateRobot(double fi) {
         robot.rot = robot.rot + fi;
         draw();
@@ -175,7 +200,7 @@ public class MapGUI extends JFrame {
     }
     
     private void drawPath(Graphics g) {
-        g.setColor(Color.green);
+        g.setColor(Color.gray);
         int size = path.size();
         for(int i=1; i<size; i++) {
             Point2D p1 = path.get(i-1);
@@ -191,7 +216,7 @@ public class MapGUI extends JFrame {
         int size = states.size();
         
         for(int i=0; i<size; i++) {
-            g.setColor(Color.red);
+            g.setColor(Color.gray);
             Point3D p2 = states.get(i);
             int[] pos2 = cast(p2.getX(), p2.getY());
             //System.out.println("p2 "+p2.getX()+" "+p2.getY());
@@ -203,9 +228,8 @@ public class MapGUI extends JFrame {
                 int[] pos1 = cast(p1.getX(), p1.getY());
                 g.drawLine(pos1[0], pos1[1], pos2[0], pos2[1]);
             }
-            g.setColor(Color.cyan);
+            g.setColor(Color.red);
             LinkedList<Point2D> z = measurements.get(i);
-//            System.out.println("z " + i+ " size "+z.size());
             for(Point2D zi : z) {
                 g.drawLine(pos2[0], pos2[1], (int)(cast(zi.getX()) * Math.cos(zi.getY()+p2.Z) + pos2[0]), 
                         (int)(cast(zi.getX()) * Math.sin(zi.getY()+p2.Z) + pos2[1]));
@@ -230,27 +254,37 @@ public class MapGUI extends JFrame {
         g.drawLine(pos[0], pos[1], x3[0], x3[1]);
     }
     
-    private void drawEKF(Graphics2D g){
-    	g.setColor(Color.cyan);
-    	System.out.println("pos: "+mu.x+" "+mu.y);
-    	System.out.println("v1: "+v1[0]+" "+v1[1]);
-    	System.out.println("v2: "+v2[0]+" "+v2[1]);
-    	System.out.println();
-    	double angle = Math.atan2(v1[1], v1[0]);
+    private void drawEKFEllipse(Point mu, double[] v1, double[] v2, Graphics2D g){
     	
+    	double angle = Math.atan2(v1[1], v1[0]);
     	
     	double length1 = cast(Math.sqrt(v1[0]*v1[0]+v1[1]*v1[1])),
     			length2 = cast(Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1]));
     	
     	int[] coord = cast(mu.x,mu.y);
-    	System.out.println("coord: "+coord[0]+" "+coord[1]);
     	Ellipse2D ellipse = new Ellipse2D.Double(coord[0]-length1/2.0,coord[1]-length2/2.0,length1,length2);
     	
     	AffineTransform at = new AffineTransform();
     	at.rotate(angle,coord[0],coord[1]);
     	
     	g.draw(at.createTransformedShape(ellipse));
+    }
+    
+    private void drawRobotEKF(Graphics2D g){
+    	g.setColor(Color.cyan);
     	
+    	drawEKFEllipse(robotEKF.mu, robotEKF.v1, robotEKF.v2, g);
+    }
+    
+    private void drawLandmarksEKF(Graphics2D g){
+    	g.setColor(Color.orange);
+    	for(EKFPos e : landmarks.values()){
+    		int[] coord = cast(e.mu.x,e.mu.y);
+    		Ellipse2D c = new Ellipse2D.Double(coord[0]-2.5,coord[1]-2.5,5,5);
+    		g.draw(c);
+    		System.out.println("EigenVecs: "+e.v1[0]+" "+e.v1[1]+", "+e.v2[0]+" "+e.v2[1]);
+    		drawEKFEllipse(new Point(e.mu.x, e.mu.x), e.v1, e.v2, g);
+    	}
     }
     
     public void draw() {
@@ -268,8 +302,8 @@ public class MapGUI extends JFrame {
         drawPath(g);
         drawStates(g);
         drawRobot(g);
-        drawEKF((Graphics2D)g);
-        
+        drawRobotEKF((Graphics2D)g);
+        drawLandmarksEKF((Graphics2D)g);
     }
 }
 

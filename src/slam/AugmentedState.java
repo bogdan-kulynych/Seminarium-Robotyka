@@ -3,7 +3,7 @@ package slam;
 import utils.Pose;
 import lejos.util.Matrix;
 
-class AugmentedState extends Matrix {
+public class AugmentedState extends Matrix {
 	private static final long serialVersionUID = 1L;
 
 	public AugmentedState(Matrix m) {
@@ -40,6 +40,6 @@ class AugmentedState extends Matrix {
 	public void setLandmarkPose(int j, float x, float y) {
 		int base = 3 + 3*j;
 		this.set(base, 0, x);
-		this.set(base, 1, y);
+		this.set(base + 1, 0, y);
 	}
 }
