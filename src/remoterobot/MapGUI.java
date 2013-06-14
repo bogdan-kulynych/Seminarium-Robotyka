@@ -241,8 +241,8 @@ public class MapGUI extends JFrame {
     			length2 = cast(Math.sqrt(v2[0]*v2[0]+v2[1]*v2[1]));
     	
     	int[] coord = cast(mu.x,mu.y);
+    	System.out.println("coord: "+coord[0]+" "+coord[1]);
     	Ellipse2D ellipse = new Ellipse2D.Double(coord[0],coord[1],length1,length2);
-
     	
     	AffineTransform at = new AffineTransform();
     	at.rotate(angle);

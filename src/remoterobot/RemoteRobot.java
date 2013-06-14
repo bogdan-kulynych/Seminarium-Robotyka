@@ -71,11 +71,9 @@ public class RemoteRobot extends JFrame {
                 
                 double dr = Math.toRadians((dA+dB)/2)*0.036;
                 double dt = Math.toRadians((dB-dA)/2)*0.036 / 0.08;
-                double x = ekf.getPose().position.x;
-				double y = ekf.getPose().position.y;
 				double t = ekf.getPose().direction.rad();
-				double dx = x + Math.cos(t);
-				double dy = y + Math.sin(t);
+				double dx = dr*Math.cos(t);
+				double dy = dr*Math.sin(t);
 				
                 if(FORWARD) {
                     if(STOP)
